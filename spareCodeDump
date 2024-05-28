@@ -1,0 +1,39 @@
+  // async function transcribeWithDiarization(filePath) {
+  //   const audioBytes = await FileSystem.readAsStringAsync(filePath, { encoding: FileSystem.EncodingType.Base64 });
+
+  //   const config = {
+  //     model: "latest_long",
+  //     encoding: "MP3",
+  //     sampleRateHertz: 16000,
+  //     enableWordTimeOffsets: true,
+  //     enableWordConfidence: true,
+  //     languageCode: "en-IN",
+  //   };
+
+  //   const request = {
+  //     audio: audioBytes,
+  //     config: config,
+  //   };
+
+  //   try {
+  //     const response = await axios.post(
+  //       `https://speech.googleapis.com/v1/speech:recognize?key=${Google_API_KEY}`,
+  //       request
+  //     );
+  //     console.log('Transcription response:', response.data);
+  //     const transcription = response.data.results.map(result => result.alternatives[0].transcript).join('\n');
+
+  //     const speakerSegments = response.data.results.flatMap(result =>
+  //       result.alternatives[0].words.map(wordInfo => ({
+  //         word: wordInfo.word,
+  //         speakerTag: wordInfo.speakerTag,
+  //       }))
+  //     );
+
+  //     speakerSegments.forEach(segment => {
+  //       console.log(`Speaker ${segment.speakerTag}: ${segment.word}`);
+  //     });
+  //   } catch (error) {
+  //     console.error('Error transcribing audio:', error);
+  //   }
+  // }
