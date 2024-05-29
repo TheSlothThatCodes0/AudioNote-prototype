@@ -16,9 +16,10 @@ import * as Permissions from "expo-permissions";
 import * as Sharing from "expo-sharing";
 import { Audio } from "expo-av";
 import axios from "axios";
+import { NativeModules } from "react-native";
 
 import OpenAI from "openai";
-import { API_KEY, Google_API_KEY } from "./config";
+import { API_KEY, Google_API_KEY, IP_ADDRESS } from "./config";
 // import { RNFFmpeg } from 'react-native-ffmpeg';
 
 
@@ -140,26 +141,27 @@ export default function App() {
           console.log("Recorded audio stored as MP3 at", mp3Uri);
           setUri(mp3Uri);
     
-          // console.log("Transcribing audio...");
-          // const formData = new FormData();
-          // formData.append("audio", {
-          //   uri: mp3Uri,
-          //   type: "audio/mp3",
-          //   name: "recording.mp3",
-          // });
+          console.log("Transcribing audio...");
+          const formData = new FormData();
+          formData.append("audio", {
+            uri: mp3Uri,
+            type: "audio/mp3",
+            name: "recording.mp3",
+          });
     
-          // const response = await axios.post(
-          //   "http://localhost:3000/transcribe",
-          //   formData,
-          //   {
-          //     headers: {
-          //       "Content-Type": "multipart/form-data",
-          //     },
-          //   }
-          // );
+          const response = await axios.post(
+            `http://${IP_ADDRESS}:3000/transcribe`,
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
     
-          // console.log("Transcription:", response.data.transcription);
-          // console.log("Audio transcription complete.");
+          console.log("Transcription:", response.data.transcription);
+          setGeneratedResponse(response.data.transcription);
+          console.log("Audio transcription complete.");
     
           setRecording(null); // Update the state to reflect that recording has stopped
           setProgress(0);
@@ -204,11 +206,11 @@ export default function App() {
     }
   }
 
-  const generateResponse = async (audioUri) => {
+  const generateResponse = async (transcription) => {
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: audioUri }],
+        messages: [{ role: "user", content: transcription }],
       });
 
       console.log("Generated response:", response.choices[0].message.content);
