@@ -1,4 +1,7 @@
+// import { AppRegistry } from "react-native";
+// AppRegistry.registerComponent(appName, () => App());
 import React, { useState, useEffect } from "react";
+
 import {
   StyleSheet,
   View,
@@ -13,9 +16,11 @@ import * as Permissions from "expo-permissions";
 import * as Sharing from "expo-sharing";
 import { Audio } from "expo-av";
 import axios from "axios";
+
 import OpenAI from "openai";
 import { API_KEY, Google_API_KEY } from "./config";
-// import {RNFFmpeg} from 'react-native-ffmpeg';
+// import { RNFFmpeg } from 'react-native-ffmpeg';
+
 
 const openai = new OpenAI({
   apiKey: API_KEY,
@@ -78,67 +83,90 @@ export default function App() {
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
-
+  
+      const recordingOptions = {
+        android: {
+          extension: ".m4a",
+          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
+          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          bitRateMode: Audio.RECORDING_OPTION_ANDROID_BIT_RATE_MODE_CBR,
+          gain: gainValue, // Set the gain here
+        },
+        ios: {
+          extension: ".caf",
+          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_MAX,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+          gain: gainValue, // Set the gain here
+        },
+      };
+  
       const { recording } = await Audio.Recording.createAsync(
-        Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY,
+        recordingOptions,
         (status) => setProgress(status.durationMillis / 1000)
       );
-
+  
       recording.setProgressUpdateInterval(100);
-      recording.setOnRecordingStatusUpdate(async (status) => {
+      recording.setOnRecordingStatusUpdate((status) => {
         setProgress(status.durationMillis / 1000);
       });
-
+  
       setRecording(recording);
     } catch (err) {
       console.error("Failed to start recording", err);
     }
   }
 
-  async function stopRecording() {
-    try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-      console.log("Recording stopped and stored at", uri);
+      
 
-      const mp3Uri = `${FileSystem.documentDirectory}recording.mp3`;
-      await FileSystem.copyAsync({ from: uri, to: mp3Uri });
-      await FileSystem.deleteAsync(uri);
-      // audioAmplify(mp3Uri, mp3Uri, gainValue);
-
-      console.log("Recorded audio stored as MP3 at", mp3Uri);
-      setUri(mp3Uri);
-      // generateResponse(mp3Uri);
-
-
-      console.log("Transcribing audio...");
-      const formData = new FormData();
-      formData.append("audio", {
-        uri: mp3Uri,
-        type: "audio/mp3",
-        name: "recording.mp3",
-      });
-
-      const response = await axios.post(
-        "http://localhost:3000/transcribe",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+      async function stopRecording() {
+        try {
+          await recording.stopAndUnloadAsync();
+          const uri = recording.getURI();
+          console.log("Recording stopped and stored at", uri);
+    
+          const mp3Uri = `${FileSystem.documentDirectory}recording.mp3`;
+          await FileSystem.copyAsync({ from: uri, to: mp3Uri });
+          await FileSystem.deleteAsync(uri);
+          // audioAmplify(mp3Uri, mp3Uri, gainValue);
+    
+          console.log("Recorded audio stored as MP3 at", mp3Uri);
+          setUri(mp3Uri);
+    
+          // console.log("Transcribing audio...");
+          // const formData = new FormData();
+          // formData.append("audio", {
+          //   uri: mp3Uri,
+          //   type: "audio/mp3",
+          //   name: "recording.mp3",
+          // });
+    
+          // const response = await axios.post(
+          //   "http://localhost:3000/transcribe",
+          //   formData,
+          //   {
+          //     headers: {
+          //       "Content-Type": "multipart/form-data",
+          //     },
+          //   }
+          // );
+    
+          // console.log("Transcription:", response.data.transcription);
+          // console.log("Audio transcription complete.");
+    
+          setRecording(null); // Update the state to reflect that recording has stopped
+          setProgress(0);
+        } catch (err) {
+          console.error("Failed to stop recording", err);
         }
-      );
-
-      console.log("Transcription:", response.data.transcription);
-      console.log("Audio transcription complete.");
-
-
-      setRecording(null);
-      setProgress(0);
-    } catch (err) {
-      console.error("Failed to stop recording", err);
-    }
-  }
+      }
 
   async function playRecording() {
     try {

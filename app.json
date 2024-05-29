@@ -2,6 +2,11 @@
   "expo": {
     "name": "audioNote_gain_test",
     "slug": "audioNote_gain_test",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "3ce5d63e-4b6e-4a43-9815-d058373ad87f"
+      }
+    }
   }
 }

@@ -5,7 +5,9 @@ const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 
-const app = express();
+var app = express();
+var cors  =require('cors');
+app.use(cors());
 const port = process.env.PORT || 3000;
 
 const upload = multer({ dest: "uploads/" });
