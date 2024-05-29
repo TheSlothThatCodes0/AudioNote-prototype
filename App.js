@@ -222,7 +222,7 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
+  useEffect(() =>      {   
     if (recording) {
       Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
