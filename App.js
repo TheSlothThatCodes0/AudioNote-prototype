@@ -17,6 +17,7 @@ import * as Sharing from "expo-sharing";
 import { Audio } from "expo-av";
 import axios from "axios";
 import { NativeModules } from "react-native";
+//import { manipulateAsync } from 'expo-image-manipulator';
 
 import OpenAI from "openai";
 import { API_KEY, Google_API_KEY, IP_ADDRESS } from "./config";
@@ -40,19 +41,8 @@ export default function App() {
   }, []);
 
   const getPermissions = async () => {
-    const { status: micStatus } = await Permissions.askAsync(
-      Permissions.AUDIO_RECORDING
-    );
-    let storageStatus;
-    if (Platform.OS === "ios") {
-      storageStatus = (await Permissions.askAsync(Permissions.MEDIA_LIBRARY))
-        .status;
-    } else {
-      storageStatus = (
-        await Permissions.askAsync(Permissions.WRITE_EXTERNAL_STORAGE)
-      ).status;
-    }
-
+    const { status: micStatus } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
+    const { status:storageStatus} = await Permissions.askAsync(Permissions.MEDIA_LIBRARY);
     if (micStatus !== "granted" || storageStatus !== "granted") {
       Alert.alert(
         "Permissions Denied",
@@ -84,7 +74,7 @@ export default function App() {
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
-  
+
       const recordingOptions = {
         android: {
           extension: ".m4a",
@@ -93,8 +83,6 @@ export default function App() {
           sampleRate: 44100,
           numberOfChannels: 2,
           bitRate: 128000,
-          bitRateMode: Audio.RECORDING_OPTION_ANDROID_BIT_RATE_MODE_CBR,
-          gain: gainValue, // Set the gain here
         },
         ios: {
           extension: ".caf",
@@ -105,20 +93,19 @@ export default function App() {
           linearPCMBitDepth: 16,
           linearPCMIsBigEndian: false,
           linearPCMIsFloat: false,
-          gain: gainValue, // Set the gain here
         },
       };
-  
+
       const { recording } = await Audio.Recording.createAsync(
         recordingOptions,
         (status) => setProgress(status.durationMillis / 1000)
       );
-  
+
       recording.setProgressUpdateInterval(100);
       recording.setOnRecordingStatusUpdate((status) => {
         setProgress(status.durationMillis / 1000);
       });
-  
+
       setRecording(recording);
     } catch (err) {
       console.error("Failed to start recording", err);
@@ -127,49 +114,42 @@ export default function App() {
 
       
 
-      async function stopRecording() {
-        try {
-          await recording.stopAndUnloadAsync();
-          const uri = recording.getURI();
-          console.log("Recording stopped and stored at", uri);
-    
-          const mp3Uri = `${FileSystem.documentDirectory}recording.mp3`;
-          await FileSystem.copyAsync({ from: uri, to: mp3Uri });
-          await FileSystem.deleteAsync(uri);
-          // audioAmplify(mp3Uri, mp3Uri, gainValue);
-    
-          console.log("Recorded audio stored as MP3 at", mp3Uri);
-          setUri(mp3Uri);
-    
-          console.log("Transcribing audio...");
-          const formData = new FormData();
-          formData.append("audio", {
-            uri: mp3Uri,
-            type: "audio/mp3",
-            name: "recording.mp3",
-          });
-    
-          const response = await axios.post(
-            `http://${IP_ADDRESS}:3000/transcribe`,
-            formData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            }
-          );
-    
-          console.log("Transcription:", response.data.transcription);
-          setGeneratedResponse(response.data.transcription);
-          console.log("Audio transcription complete.");
-    
-          setRecording(null); // Update the state to reflect that recording has stopped
-          setProgress(0);
-        } catch (err) {
-          console.error("Failed to stop recording", err);
-        }
-      }
+  async function stopRecording() {
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      console.log("Recording stopped and stored at", uri);
 
+      setUri(uri);
+
+      console.log("Transcribing audio...");
+      const formData = new FormData();
+      formData.append("audio", {
+        uri,
+        type: Platform.OS === "ios" ? "audio/x-caf" : "audio/mp4",
+        name: Platform.OS === "ios" ? "recording.caf" : "recording.m4a",
+      });
+
+      const response = await axios.post(
+        `http://${IP_ADDRESS}:3000/transcribe`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Transcription:", response.data.transcription);
+      setGeneratedResponse(response.data.transcription);
+      console.log("Audio transcription complete.");
+
+      setRecording(null);
+      setProgress(0);
+    } catch (err) {
+      console.error("Failed to stop recording", err);
+    }
+  }
   async function playRecording() {
     try {
       if (uri) {
