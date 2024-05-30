@@ -85,10 +85,10 @@ export default function App() {
           bitRate: 128000,
         },
         ios: {
-          extension: ".caf",
-          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_MAX,
+          extension: ".wav",
+          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
           sampleRate: 44100,
-          numberOfChannels: 2,
+          numberOfChannels: 1,
           bitRate: 128000,
           linearPCMBitDepth: 16,
           linearPCMIsBigEndian: false,

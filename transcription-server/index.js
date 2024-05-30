@@ -25,8 +25,8 @@ app.post("/transcribe", upload.single("audio"), async (req, res) => {
 
     const config = {
       model: "latest_long",
-      encoding: "MP3",
-      sampleRateHertz: 16000,
+      encoding: req.file.mimetype === "audio/x-caf" ? "LINEAR16" : "MP3",
+      sampleRateHertz: 44100,
       enableWordTimeOffsets: true,
       enableWordConfidence: true,
       languageCode: "en-IN",
