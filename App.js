@@ -214,6 +214,7 @@ export default function App() {
       await axios.post(`http://${IP_ADDRESS}:3000/resetTranscriptionFile`);
       alert("Previous recording deleted.");
       setFileData(""); 
+      setGeneratedResponse("");
     } catch (error) {
       console.error("Error resetting transcription file:", error);
       alert("Error resetting transcription file. Please try again.");
