@@ -24,7 +24,8 @@
     "react-native-audio": "^4.3.0",
     "react-native-audio-record": "^0.2.2",
     "react-native-ffmpeg": "^0.5.2",
-    "react-native-fs": "^2.20.0"
+    "react-native-fs": "^2.20.0",
+    "react-native-gesture-handler": "^2.16.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

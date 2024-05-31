@@ -22,6 +22,8 @@ import { NativeModules } from "react-native";
 import OpenAI from "openai";
 import { API_KEY, Google_API_KEY, IP_ADDRESS } from "./config";
 // import { RNFFmpeg } from 'react-native-ffmpeg';
+//const fs = require('fs');
+//const filePath = '/Users/kabir/AudioNote/transcription-server/transcriptionFile(s)/transcription.txt';
 
 
 const openai = new OpenAI({
@@ -35,9 +37,15 @@ export default function App() {
   const [gainValue, setGainValue] = useState(1);
   const [uri, setUri] = useState("");
   const [generatedResponse, setGeneratedResponse] = useState("");
+  const [transcription, setTranscription] = useState("");
+  const [fileData, setFileData] = useState("");
+  const [userMessage, setUserMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
+  
 
   useEffect(() => {
     getPermissions();
+    fetchTranscription();
   }, []);
 
   const getPermissions = async () => {
@@ -66,6 +74,19 @@ export default function App() {
   //     console.error("Error amplifying audio:", error);
   //   }
   // }
+
+  const fetchTranscription = async () => {
+    try {
+      const response = await axios.get(`http://${IP_ADDRESS}:3000/file`);
+      setFileData(response.data);
+    } catch (error) {
+      console.error("Error fetching transcription:", error);
+      Alert.alert(
+        "Fetch Failed",
+        "An error occurred while trying to fetch the transcription."
+      );
+    }
+  };
 
   async function startRecording() {
     try {
@@ -139,11 +160,13 @@ export default function App() {
           },
         }
       );
-
-      console.log("Transcription:", response.data.transcription);
-      setGeneratedResponse(response.data.transcription);
+      const transcription = response.data.transcription;
+      console.log("Transcription:", transcription);
+      //setGeneratedResponse(transcription);
+      
       console.log("Audio transcription complete.");
-
+      generateResponse(transcription);
+      fetchTranscription();
       setRecording(null);
       setProgress(0);
     } catch (err) {
@@ -186,11 +209,23 @@ export default function App() {
     }
   }
 
-  const generateResponse = async (transcription) => {
+  const handleResetFile = async () => {
     try {
+      await axios.post(`http://${IP_ADDRESS}:3000/resetTranscriptionFile`);
+      alert("Previous recording deleted.");
+      setFileData(""); 
+    } catch (error) {
+      console.error("Error resetting transcription file:", error);
+      alert("Error resetting transcription file. Please try again.");
+    }
+  };
+  
+  const generateResponse = async (Transcription) => {
+    try {
+      
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: transcription }],
+        messages: [{ role: "user", content: fileData + Transcription}],
       });
 
       console.log("Generated response:", response.choices[0].message.content);
@@ -203,6 +238,8 @@ export default function App() {
       );
     }
   };
+
+  
 
   useEffect(() =>      {   
     if (recording) {
@@ -250,7 +287,7 @@ export default function App() {
         <Text>Generated Response:</Text>
         <Text>{generatedResponse}</Text>
       </View>
-      <View style={styles.gain}>
+      {/* <View style={styles.gain}>
         <Text>Mic Gain</Text>
         <Slider
           style={{ width: 200, height: 40 }}
@@ -261,7 +298,10 @@ export default function App() {
           step={0.1}
         />
         <Text>{gainValue.toFixed(1)}</Text>
-      </View>
+      </View> */}
+      <TouchableOpacity style = {styles.button} onPress={handleResetFile}>
+        <Text>Reset</Text>
+      </TouchableOpacity>
     </View>
   );
 }

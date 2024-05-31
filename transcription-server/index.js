@@ -15,6 +15,8 @@ const speechClient = new SpeechClient();
 
 app.use(express.json());
 
+const transcriptionFilePath = path.join('/Users/kabir/AudioNote/transcription-server/transcriptionFile(s)','transcription.txt')
+
 app.post("/transcribe", upload.single("audio"), async (req, res) => {
   try {
     const filePath = path.join(__dirname, req.file.path);
@@ -42,7 +44,7 @@ app.post("/transcribe", upload.single("audio"), async (req, res) => {
     const transcription = response.results
       .map((result) => result.alternatives[0].transcript)
       .join("\n");
-
+    fs.appendFileSync(transcriptionFilePath, transcription + "\n");
     // Delete the file after processing
     fs.unlinkSync(filePath);
 
@@ -50,9 +52,43 @@ app.post("/transcribe", upload.single("audio"), async (req, res) => {
   } catch (error) {
     console.error("Error during transcription:", error);
     res.status(500).send("Error during transcription");
+
+
   }
 });
+
+app.post("/resetTranscriptionFile", (req,res) => {
+  try {
+    fs.writeFileSync(transcriptionFilePath, "");
+    res.send("Transcription file reset successfully");
+  }catch (error) {
+    console.error("Error resetting transcription file:", error);
+    res.status(500).send("Error resetting transcription file.");
+
+    
+  }
+})
+
+app.get('/file' , (req,res) => {
+  res.sendFile(transcriptionFilePath, (err) => {
+    if (err) {
+      console.error("Error sending file:", err);
+      res.status(err.status).end();
+    } else{
+      console.log("File sent successfully.")
+    }
+  });
+})
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+
+
+// fs.readFile(filePath, 'utf8', (err, data) => {
+//   if (err) {
+//     console.error('Error reading the file:', err);
+//     return;
+//   }
+// })
