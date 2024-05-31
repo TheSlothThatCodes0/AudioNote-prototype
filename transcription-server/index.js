@@ -15,7 +15,7 @@ const speechClient = new SpeechClient();
 
 app.use(express.json());
 
-const transcriptionFilePath = path.join('/Users/kabir/AudioNote/transcription-server/transcriptionFile(s)','transcription.txt')
+const transcriptionFilePath = path.join(__dirname,'./transcriptionFile(s)','transcription.txt')
 
 app.post("/transcribe", upload.single("audio"), async (req, res) => {
   try {
